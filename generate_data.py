@@ -16,7 +16,7 @@ if __name__ == '__main__':
     print('==> Dataset: {}  |  Tranining Samples {}  | Exp: {}'.format(args.dataset, args.num_train_samples, args.exp))
 
     if args.exp == 'RandomSpawn':
-        config = DataConfig()
+        config = DataConfig(args.dataset)
         agent = Agent(num_actions=4)
         env = NoiseWorld()
 
@@ -24,12 +24,12 @@ if __name__ == '__main__':
         train_samples = args.num_train_samples
         exp = RandomSpawnExperiment(agent, env, total_episodes=args.num_train_samples,
                                     max_steps_per_ep=1, persist=True,
-                                    persist_dir=config.train_dir, seed=0)
+                                    persist_dir=config.get_train_dir(), seed=0)
         exp.run()
 
         # Generating Testing data
         test_samples = args.num_train_samples * 0.1
         exp = RandomSpawnExperiment(agent, env, total_episodes=test_samples,
                                     max_steps_per_ep=1, persist=True,
-                                    persist_dir=config.test_dir, seed=0)
+                                    persist_dir=config.get_test_dir(), seed=0)
         exp.run()
