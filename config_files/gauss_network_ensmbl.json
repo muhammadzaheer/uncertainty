@@ -1,22 +1,23 @@
 {
-    "config_class": "NetworkConfig",
+    "config_class": "EnsembleConfig",
     "fixed_parameters": {
-        "exp_name": "test",
-        "dataset": "test_dataset",
+        "exp_name": "gauss_network_ensmbl",
+        "dataset": "random_spawn_5k_v0",
         "lr": 0.001,
         "momentum": 0.9,
-        "network": "ExpectationNetwork",
+        "network": "GaussianVarianceNetwork",
         "is_resume": false,
         "batch_size": 32,
         "num_actions": 4,
         "state_dim": 2,
-        "total_epochs": 40,
+        "num_epochs": 40,
         "save_frequency": 10,
         "test_every_batches": 100,
         "batches_per_test": 100,
+        "num_networks": 5,
         "sample_loss": true,
         "exp_loss": true,
-        "aleatoric": false,
-        "epistemic": false
+        "aleatoric": true,
+        "epistemic": true
     }
 }

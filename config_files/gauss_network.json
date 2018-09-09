@@ -1,0 +1,22 @@
+{
+    "config_class": "NetworkConfig",
+    "fixed_parameters": {
+        "exp_name": "gauss_network",
+        "dataset": "random_spawn_5k_v0",
+        "lr": 0.001,
+        "momentum": 0.9,
+        "network": "GaussianVarianceNetwork",
+        "is_resume": false,
+        "batch_size": 32,
+        "num_actions": 4,
+        "state_dim": 2,
+        "total_epochs": 40,
+        "save_frequency": 10,
+        "test_every_batches": 100,
+        "batches_per_test": 100,
+        "sample_loss": true,
+        "exp_loss": true,
+        "aleatoric": true,
+        "epistemic": false
+    }
+}
