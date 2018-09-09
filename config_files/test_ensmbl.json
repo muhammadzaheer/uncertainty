@@ -1,0 +1,23 @@
+{
+    "config_class": "EnsembleConfig",
+    "fixed_parameters": {
+        "exp_name": "test_ensmbl",
+        "dataset": "test_dataset",
+        "lr": 0.001,
+        "momentum": 0.9,
+        "network": "ExpectationNetwork",
+        "is_resume": false,
+        "batch_size": 32,
+        "num_actions": 4,
+        "state_dim": 2,
+        "num_epochs": 40,
+        "save_frequency": 10,
+        "test_every_batches": 100,
+        "batches_per_test": 100,
+        "num_networks": 5,
+        "sample_loss": true,
+        "exp_loss": true,
+        "aleatoric": false,
+        "epistemic": true
+    }
+}
