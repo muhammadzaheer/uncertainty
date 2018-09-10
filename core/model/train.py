@@ -52,6 +52,7 @@ class Trainer(object):
             self.network.train()
             loss = self.network.fit(state, action, delta)
             self.summary_writer.add_scalar('loss/step/train_loss', loss, self.curr_epoch*len(self.train_loader) + i)
+            self.network.write_summary(self.summary_writer)
             losses.append(loss)
 
             if self.curr_batch % self.eval_frequency == 0:

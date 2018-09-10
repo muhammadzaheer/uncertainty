@@ -59,7 +59,7 @@ class HeatMaps(object):
     """
     Draws lines with multiple runs along with their error bars
     """
-    def __init__(self, path_formatters, num_runs, parser_func=None, save_path=None, cols=None):
+    def __init__(self, path_formatters, num_runs, parser_func=None, save_path=None, cols=None, vrange=None):
         """
         :param path_formatters: list of generic data paths for each line
                                 in which run number can be substituted
@@ -74,6 +74,7 @@ class HeatMaps(object):
         self.parser_func = parser_func
         self.save_path = save_path
         self.cols = cols
+        self.vrange = vrange
 
     def draw(self):
         fig, axs = plt.subplots(nrows=self.num_runs, ncols=len(self.cols), figsize=(6*len(self.cols), 6*self.num_runs))
@@ -84,7 +85,11 @@ class HeatMaps(object):
                 for k, pf in enumerate(self.path_formatters):
                     pf = pf.format(run)
                     map = self.parser_func(pf)
-                    sns.heatmap(map, ax=axs[run][k])
+                    if self.vrange[k] is not None:
+                        vmin, vmax = self.vrange[k]
+                        sns.heatmap(map, ax=axs[run][k], vmin=vmin, vmax=vmax)
+                    else:
+                        sns.heatmap(map, ax=axs[run][k])
                     axs[run][k].set_xticks([])
                     axs[run][k].set_yticks([])
         else:
@@ -93,7 +98,11 @@ class HeatMaps(object):
             for k, pf in enumerate(self.path_formatters):
                 pf = pf.format(0)
                 map = self.parser_func(pf)
-                sns.heatmap(map, ax=axs[k])
+                if self.vrange[k] is not None:
+                    vmin, vmax = self.vrange[k]
+                    sns.heatmap(map, ax=axs[k], vmin=vmin, vmax=vmax)
+                else:
+                    sns.heatmap(map, ax=axs[k])
                 axs[k].set_xticks([])
                 axs[k].set_yticks([])
         plt.savefig(self.save_path, bbox_inches='tight')

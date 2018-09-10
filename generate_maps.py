@@ -12,7 +12,7 @@ from core.config import DataConfig, ConfigLoader
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='main')
-    parser.add_argument('--id', default=0)
+    parser.add_argument('--id', default=0, type=int)
     parser.add_argument('--config-file', default='config_files/test.json', help='Configuration File')
     parser.add_argument('--eval', default='RandomSpawn')
     parser.add_argument('--num-steps', default=5000)

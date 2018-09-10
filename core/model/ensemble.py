@@ -91,6 +91,9 @@ class Ensemble(object):
     def encode_state(self, s):
         return self.networks[0].encode_state(s)
 
+    def write_summary(self, summary_writer):
+        pass
+
 
 if __name__ == '__main__':
     from core.model.network import ExpectationNetwork
