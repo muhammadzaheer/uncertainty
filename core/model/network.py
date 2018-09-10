@@ -10,11 +10,11 @@ import torch.optim as optim
 
 
 class Network(nn.Module):
-    def __init__(self, lr=0.001, state_dim=2, num_actions=4):
+    def __init__(self, **kwargs):
         super(Network, self).__init__()
-        self.lr = lr
-        self.state_dim = state_dim
-        self.num_actions = num_actions
+        self.lr = kwargs['lr']
+        self.state_dim = kwargs['state_dim']
+        self.num_actions = kwargs['num_actions']
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def init_weight(self):
@@ -88,22 +88,22 @@ class Network(nn.Module):
 
 
 class ExpectationNetwork(Network):
-    def __init__(self, lr=0.001, state_dim=2, num_actions=4):
-        super(ExpectationNetwork, self).__init__(lr, state_dim, num_actions)
+    def __init__(self, **kwargs):
+        super(ExpectationNetwork, self).__init__(**kwargs)
 
-        self.fc1 = nn.Linear(in_features=state_dim, out_features=10)
+        self.fc1 = nn.Linear(in_features=self.state_dim, out_features=10)
         self.fc2 = nn.Linear(in_features=10, out_features=10)
 
         self.w_enc = nn.Linear(in_features=10, out_features=10)
-        self.w_a = nn.Linear(in_features=num_actions, out_features=10)
+        self.w_a = nn.Linear(in_features=self.num_actions, out_features=10)
         self.w_dec = nn.Linear(in_features=10, out_features=10)
 
         self.fc3 = nn.Linear(in_features=10, out_features=10)
-        self.fc4 = nn.Linear(in_features=10, out_features=state_dim)
+        self.fc4 = nn.Linear(in_features=10, out_features=self.state_dim)
 
         self.init_weight()
 
-        self.optimizer = optim.Adam(self.parameters(), lr=lr)
+        self.optimizer = optim.Adam(self.parameters(), lr=self.lr)
 
     def forward(self, x, a):
 
@@ -155,22 +155,22 @@ class ExpectationNetwork(Network):
 
 class GaussianVarianceNetwork(Network):
     # V1: Same as expectation network except that we have two extra units
-    def __init__(self, lr=0.001, state_dim=2, num_actions=4):
-        super(GaussianVarianceNetwork, self).__init__(lr, state_dim, num_actions)
+    def __init__(self, **kwargs):
+        super(GaussianVarianceNetwork, self).__init__(**kwargs)
 
-        self.fc1 = nn.Linear(in_features=state_dim, out_features=10)
+        self.fc1 = nn.Linear(in_features=self.state_dim, out_features=10)
         self.fc2 = nn.Linear(in_features=10, out_features=10)
 
         self.w_enc = nn.Linear(in_features=10, out_features=10)
-        self.w_a = nn.Linear(in_features=num_actions, out_features=10)
+        self.w_a = nn.Linear(in_features=self.num_actions, out_features=10)
         self.w_dec = nn.Linear(in_features=10, out_features=10)
 
         self.fc3 = nn.Linear(in_features=10, out_features=10)
-        self.fc4 = nn.Linear(in_features=10, out_features=state_dim*2)
+        self.fc4 = nn.Linear(in_features=10, out_features=self.state_dim*2)
 
         self.init_weight()
 
-        self.optimizer = optim.Adam(self.parameters(), lr=lr)
+        self.optimizer = optim.Adam(self.parameters(), lr=self.lr)
 
     def forward(self, x, a):
 
@@ -235,21 +235,22 @@ class GaussianVarianceNetwork(Network):
 
 class GaussianVarianceNetworkv2(Network):
     # Separate layers for exp & variane
-    def __init__(self, lr=0.001, state_dim=2, num_actions=4):
-        super(GaussianVarianceNetworkv2, self).__init__(lr, state_dim, num_actions)
+    def __init__(self, **kwargs):
+        super(GaussianVarianceNetworkv2, self).__init__(**kwargs)
+        self.bound_var = kwargs['bound_var']
 
-        self.fc1 = nn.Linear(in_features=state_dim, out_features=10)
+        self.fc1 = nn.Linear(in_features=self.state_dim, out_features=10)
         self.fc2 = nn.Linear(in_features=10, out_features=10)
 
         self.w_enc = nn.Linear(in_features=10, out_features=10)
-        self.w_a = nn.Linear(in_features=num_actions, out_features=10)
+        self.w_a = nn.Linear(in_features=self.num_actions, out_features=10)
         self.w_dec = nn.Linear(in_features=10, out_features=10)
 
         self.exp_fc3 = nn.Linear(in_features=10, out_features=10)
-        self.exp_fc4 = nn.Linear(in_features=10, out_features=state_dim)
+        self.exp_fc4 = nn.Linear(in_features=10, out_features=self.state_dim)
 
         self.var_fc3 = nn.Linear(in_features=10, out_features=10)
-        self.var_fc4 = nn.Linear(in_features=10, out_features=state_dim)
+        self.var_fc4 = nn.Linear(in_features=10, out_features=self.state_dim)
 
         self.exp_drop = nn.Dropout(p=0.2)
         self.var_drop = nn.Dropout(p=0.2)
@@ -260,7 +261,7 @@ class GaussianVarianceNetworkv2(Network):
 
         self.init_weight()
 
-        self.optimizer = optim.Adam(self.parameters(), lr=lr)
+        self.optimizer = optim.Adam(self.parameters(), self.lr)
 
         # DEBUG vars
         self.train_step = 0
@@ -282,8 +283,10 @@ class GaussianVarianceNetworkv2(Network):
         logvar = F.relu(self.var_fc3(h_dec))
         logvar = self.var_drop(logvar)
         logvar = self.var_fc4(logvar)
-        logvar = self.max_logvar - F.softplus(self.max_logvar - logvar)
-        logvar = self.min_logvar + F.softplus(logvar - self.min_logvar)
+
+        if self.bound_var:
+            logvar = self.max_logvar - F.softplus(self.max_logvar - logvar)
+            logvar = self.min_logvar + F.softplus(logvar - self.min_logvar)
 
         return exp, logvar
 
@@ -331,7 +334,8 @@ class GaussianVarianceNetworkv2(Network):
         determ = torch.cumprod(var, dim=1)[:, -1:]
         loss = torch.sum(squared_dev * 1./var, dim=1).unsqueeze(1) + torch.log(determ)
 
-        loss += 0.01 * torch.sum(self.max_logvar) - 0.01 * torch.sum(self.min_logvar)
+        if self.bound_var:
+            loss += 0.01 * torch.sum(self.max_logvar) - 0.01 * torch.sum(self.min_logvar)
 
         # DEBUG
         if self.training:
@@ -341,7 +345,7 @@ class GaussianVarianceNetworkv2(Network):
         return loss.mean()
 
     def write_summary(self, summary_writer):
-        if self.training:
+        if self.training and self.bound_var:
             summary_writer.add_scalar('loss/step/maxlogvar0', self.max_logvar[0], self.train_step)
             summary_writer.add_scalar('loss/step/maxlogvar1', self.max_logvar[1], self.train_step)
             summary_writer.add_scalar('loss/step/minlogvar0', self.min_logvar[0], self.train_step)

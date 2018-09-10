@@ -22,14 +22,15 @@ if __name__ == '__main__':
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     Network = getattr(core.model.network, cfg.network)
+    kwargs = dict(cfg.__dict__)
     if cfg.ensemble:
         networks = []
         for k in range(cfg.num_networks):
-            n = Network(cfg.lr).to(device) if torch.cuda.is_available() else Network(cfg.lr)
+            n = Network(**kwargs).to(device) if torch.cuda.is_available() else Network(**kwargs)
             networks.append(n)
         network = Ensemble(networks)
     else:
-        network = Network(cfg.lr).to(device) if torch.cuda.is_available() else Network(cfg.lr)
+        network = Network(**kwargs).to(device) if torch.cuda.is_available() else Network(**kwargs)
     data_cfg = DataConfig(cfg.dataset)
 
     # Setting up train/test dirs
