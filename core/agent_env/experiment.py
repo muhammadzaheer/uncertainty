@@ -24,7 +24,7 @@ class RandomSpawnExperiment(object):
             ep_transitions = self.run_episode()
 
             transitions.append(ep_transitions)
-            if self.persist and (episode_count + 1) % self.persist_interval == 0:
+            if self.persist and (episode_count + 1) % min(self.persist_interval, self.total_episodes) == 0:
                 self.persist_transitions(self.persist_dir, transitions)
                 transitions = []
             episode_count += 1

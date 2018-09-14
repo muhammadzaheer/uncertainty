@@ -226,28 +226,34 @@ class Sinev0(object):
         x, y = samples[:, 0], samples[:, 1]
         return x, y
 
-    def plot_samples(self, ax, out_path=None):
 
-        # Plotting 900 random samples from (-1, 2.0)
-        samples = []
-        for k in range(900):
-            x = np.random.uniform(low=-1.0, high=2.0)
-            y = self.sample_y(x)
-            samples.append((x, y))
-        samples = np.array(samples)
-        ax.scatter(samples[:, 0], samples[:, 1], c=sns.xkcd_rgb["light pink"], alpha=0.6, marker='.')
+class Sinev1(Sinev0):
+    def __init__(self):
+        super(Sinev1, self).__init__()
+        self.alpha = 4
+        self.beta = 13
+        self.noise_region = (-0.1, 0.5)
+        self.noise = 0.3
 
-        # Plotting the mean line
-        x = np.linspace(-1, 2, num=300)
-        y = x + np.sin(self.alpha * x) + np.sin(self.beta * x)
-        ax.plot(x, y, sns.xkcd_rgb["black"], lw=1)
 
-        # Plotting the samples in the dataset
-        d = np.array(self.samples)
-        ax.scatter(d[:, 0], d[:, 1], c=sns.xkcd_rgb["sea blue"])
+class Sinev2(Sinev0):
+    def __init__(self):
+        super(Sinev2, self).__init__()
+        self.alpha = 4
+        self.beta = 21
+        self.noise_region = (-0.1, 0.5)
+        self.noise = 0.2
 
-        if out_path is not None:
-            ax.savefig(os.path.join(out_path, 'sine.png'))
+
+class Sinev3(Sinev0):
+    def __init__(self):
+        super(Sinev3, self).__init__()
+        self.alpha = 4
+        self.beta = 13
+        self.noise_region = (-0.1, 0.5)
+        self.noise = 0.0
+
+
 
 if __name__ == '__main__':
     env = NoiseWorldv0()
