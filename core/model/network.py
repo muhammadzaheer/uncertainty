@@ -536,10 +536,13 @@ class GaussianVarianceNetwork1D(Network):
         return self.forward(x, a)[0]
 
     def predict_aleatoric_variance(self, x, a):
-        variances = torch.exp(self.forward(x)[1])
-        # TODO: Possible shape error here
-        max_var = variances.max(dim=1, keepdim=True)[0]
-        return np.asscalar(max_var.data.cpu().numpy())
+        variance = torch.exp(self.forward(x)[1])
+        return variance.item()
+
+    def predict(self, x, a):
+        exp, logvar = self.forward(x, a)
+        var = torch.exp(logvar)
+        return exp, var
 
     def loss(self, mu, logvar, y):
         inv_var = torch.exp(-logvar)

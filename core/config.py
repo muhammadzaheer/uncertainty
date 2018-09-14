@@ -117,10 +117,15 @@ class EnsembleConfig(NetworkConfig):
         utils.ensure_dirs([root])
         ckpt_path = os.path.join(root, '{ensmbl}_ckpt.tar')
         best_ckpt_path = os.path.join(root, 'best_{ensmbl}_ckpt.tar')
-        save_path = os.path.join(root, '{epoch}_epoch_{ensmbl}_ensemble_ckpt.tar')
+        save_path = os.path.join(root, '{{epoch}}_epoch_{ensmbl}_ensemble_ckpt.tar')
 
         return ckpt_path, best_ckpt_path, save_path
 
+    def get_interval_resume_path(self):
+        root = os.path.join(self.project_root, 'data', 'output', 'checkpoint')
+        root = os.path.join(root, self.exp_name, "{}_run".format(self.run),
+                            "{}_param_setting".format(self.param_setting))
+        return os.path.join(root, '{epoch}_epoch_{{ensmbl}}_ensemble_ckpt.tar')
 
 class ConfigLoader(object):
     """

@@ -108,7 +108,7 @@ class Trainer(object):
         ckpt_path, best_ckpt_path, save_path = self.cfg.get_ckpt_dir()
         self.network.save_checkpoint(test_loss, self.curr_epoch, ckpt_path)
         # Copying to the epoch checkpoint
-        # self.network.copy_checkpoint(ckpt_path, save_path, self.curr_epoch)
+        self.network.copy_checkpoint(ckpt_path, save_path, self.curr_epoch)
 
         if test_loss < self.best_loss:
             self.best_loss = test_loss

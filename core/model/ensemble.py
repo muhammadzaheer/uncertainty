@@ -52,13 +52,27 @@ class Ensemble(object):
         predictions = []
         for n in self.networks:
             n.eval()
-            # x = Variable(x)
-            # predictions.append(n.forward(x, a))
             predictions.append(n.predict_mean(x, a))
         predictions = torch.cat(predictions)
         mean = torch.mean(predictions, dim=0)
         var = torch.var(predictions, dim=0)
         return mean, var
+
+    # mean[k], epistemic[k], aleatoric[k] = network.predictive_mean_epistemic_aleatoric(x)
+    def predictive_mean_epistemic_aleatoric(self, x, a):
+        mean = []
+        aleatoric = []
+        for n in self.networks:
+            n.eval()
+            mu, var = n.predict(x, a)
+            mean.append(mu)
+            aleatoric.append(var)
+        mean = torch.cat(mean)
+        epistemic = torch.var(mean, dim=0)
+        mean = torch.mean(mean, dim=0)
+        aleatoric = torch.mean(torch.cat(aleatoric), dim=0)
+        return mean, epistemic, aleatoric
+
 
     def train(self):
         for n in self.networks:

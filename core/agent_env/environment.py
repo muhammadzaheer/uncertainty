@@ -174,14 +174,10 @@ class Sinev0(object):
         self.noise_region = (0.4, 0.6)
         self.noise = 0.1
 
-        self.start_state = np.array([np.random.uniform(low=-1.0, high=2.0)])
-
-        self.current_state = None
+        self.current_state = np.array([np.random.uniform(low=-1.0, high=2.0)])
 
     def start(self, start_state=None):
-        if start_state is None:
-            self.current_state = self.start_state
-        else:
+        if start_state is not None:
             self.current_state = start_state
         return np.copy(self.current_state)
 
@@ -195,7 +191,7 @@ class Sinev0(object):
             sigma = 0.0
 
         w = np.random.normal(mu, sigma)
-        y = x + np.sin(self.alpha * (x + w)) + np.sin(self.beta * (x + w)) + w
+        y = x + np.sin(self.alpha*x) + np.sin(self.beta * x) + w
 
         return np.array([y])
 
@@ -209,6 +205,49 @@ class Sinev0(object):
 
     def sample_state(self):
         return np.array([np.random.uniform(low=-1.0, high=2.0)])
+
+    def domain(self):
+        return -1.0, 2.0
+
+    def mean_function(self, num=300):
+        # Plotting the mean line
+        x = np.linspace(-1, 2, num=num)
+        y = x + np.sin(self.alpha * x) + np.sin(self.beta * x)
+        return x, y
+
+    def generate_samples(self, num=300):
+        samples = []
+        for k in range(num):
+            x = np.random.uniform(low=-1.0, high=2.0)
+            self.current_state[0] = x
+            y = self.step(0)[0]
+            samples.append((x, y))
+        samples = np.array(samples)
+        x, y = samples[:, 0], samples[:, 1]
+        return x, y
+
+    def plot_samples(self, ax, out_path=None):
+
+        # Plotting 900 random samples from (-1, 2.0)
+        samples = []
+        for k in range(900):
+            x = np.random.uniform(low=-1.0, high=2.0)
+            y = self.sample_y(x)
+            samples.append((x, y))
+        samples = np.array(samples)
+        ax.scatter(samples[:, 0], samples[:, 1], c=sns.xkcd_rgb["light pink"], alpha=0.6, marker='.')
+
+        # Plotting the mean line
+        x = np.linspace(-1, 2, num=300)
+        y = x + np.sin(self.alpha * x) + np.sin(self.beta * x)
+        ax.plot(x, y, sns.xkcd_rgb["black"], lw=1)
+
+        # Plotting the samples in the dataset
+        d = np.array(self.samples)
+        ax.scatter(d[:, 0], d[:, 1], c=sns.xkcd_rgb["sea blue"])
+
+        if out_path is not None:
+            ax.savefig(os.path.join(out_path, 'sine.png'))
 
 if __name__ == '__main__':
     env = NoiseWorldv0()
