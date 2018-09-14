@@ -3,9 +3,9 @@ import argparse
 import torch
 
 import core.model.network
+import core.agent_env.environment
 from core.model.ensemble import Ensemble
 from core.agent_env.agent import Agent
-from core.agent_env.environment import NoiseWorld
 from core.evaluation.evaluation import RandomSpawnEvaluation
 from core.config import DataConfig, ConfigLoader
 
@@ -23,14 +23,15 @@ if __name__ == '__main__':
     cfg = ConfigLoader(args.config_file).parse(args.id)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     Network = getattr(core.model.network, cfg.network)
+    kwargs = dict(cfg.__dict__)
     if cfg.ensemble:
         networks = []
         for k in range(cfg.num_networks):
-            n = Network(cfg.lr).to(device) if torch.cuda.is_available() else Network(cfg.lr)
+            n = Network(**kwargs).to(device) if torch.cuda.is_available() else Network(**kwargs)
             networks.append(n)
         network = Ensemble(networks)
     else:
-        network = Network(cfg.lr).to(device) if torch.cuda.is_available() else Network(cfg.lr)
+        network = Network(**kwargs).to(device) if torch.cuda.is_available() else Network(**kwargs)
 
     print('==> Evaluation: {}  |  Steps {}  | config_file: {}'.format(args.eval, args.num_steps, args.config_file))
     network.resume_checkpoint(cfg.get_resume_path())
@@ -38,8 +39,8 @@ if __name__ == '__main__':
     if args.eval == 'RandomSpawn':
         config = DataConfig()
         agent = Agent(num_actions=4)
-        env = NoiseWorld()
-
+        env_class = getattr(core.agent_env.environment, cfg.env)
+        env = env_class()
         # Generating Training data
         exp = RandomSpawnEvaluation(network, agent, env, total_episodes=args.num_steps,
                                     max_steps_per_ep=1, seed=0, is_exp=cfg.exp_loss,

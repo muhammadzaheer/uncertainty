@@ -9,13 +9,17 @@ from core.model.ensemble import Ensemble
 from core.model.train import Trainer
 from core.config import DataConfig, ConfigLoader
 from core.utils import setup_logger
+from core.utils import set_seed
 
 
 if __name__ == '__main__':
+
     parser = argparse.ArgumentParser(description='main')
     parser.add_argument('--id', default=0, type=int)
     parser.add_argument('--config-file', default='config_files/test.json', help='Configuration File')
     args = parser.parse_args()
+
+    set_seed(args.id)
 
     cfg = ConfigLoader(args.config_file).parse(args.id)
     cfg.persist_config()

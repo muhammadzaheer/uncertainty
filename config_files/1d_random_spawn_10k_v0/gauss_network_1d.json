@@ -1,23 +1,23 @@
 {
-    "config_class": "EnsembleConfig",
+    "config_class": "NetworkConfig",
     "fixed_parameters": {
-        "exp_name": "gauss_network_ensmbl",
-        "dataset": "random_spawn_5k_v0",
+        "exp_name": "1d_random_spawn_10k_v0/gauss_network_1d",
+        "dataset": "1d_random_spawn_10k_v0",
         "lr": 0.001,
         "momentum": 0.9,
-        "network": "GaussianVarianceNetwork",
+        "network": "GaussianVarianceNetwork1D",
+        "env": "Sinev0",
         "is_resume": false,
         "batch_size": 32,
         "num_actions": 4,
         "state_dim": 2,
-        "num_epochs": 40,
+        "total_epochs": 80,
         "save_frequency": 10,
         "test_every_batches": 100,
         "batches_per_test": 100,
-        "num_networks": 5,
         "sample_loss": true,
         "exp_loss": true,
         "aleatoric": true,
-        "epistemic": true
+        "epistemic": false
     }
 }

@@ -1,12 +1,15 @@
 import argparse
 
 from core.agent_env.agent import Agent
-from core.agent_env.environment import NoiseWorld
+from core.agent_env.environment import NoiseWorldv0, NoiseWorldv1, NoiseWorldv2, Sinev0
 from core.agent_env.experiment import RandomSpawnExperiment
+from core.utils import set_seed
 from core.config import DataConfig
 
 
 if __name__ == '__main__':
+    set_seed(0)
+
     parser = argparse.ArgumentParser(description='generate_data')
     parser.add_argument('--dataset', default='test_dataset', help='Name of the dataset')
     parser.add_argument('--num-train-samples', default=5000, type=int)
@@ -18,7 +21,9 @@ if __name__ == '__main__':
     if args.exp == 'RandomSpawn':
         config = DataConfig(args.dataset)
         agent = Agent(num_actions=4)
-        env = NoiseWorld()
+        # env = NoiseWorldv0()
+        # env = NoiseWorldv2()
+        env = Sinev0()
 
         # Generating Training data
         train_samples = args.num_train_samples

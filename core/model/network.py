@@ -224,13 +224,17 @@ class GaussianVarianceNetwork(Network):
     def loss(self, predicted_y, y):
         mu = predicted_y[:, :self.state_dim]
         logvar = predicted_y[:, self.state_dim:]
-        var = torch.exp(logvar)
-
-        squared_dev = (mu - y)**2
-        determ = torch.cumprod(var, dim=1)[:, -1:]
-        loss = torch.sum(squared_dev * 1./var, dim=1).unsqueeze(1) + torch.log(determ)
-
-        return loss.mean()
+        # var = torch.exp(logvar)
+        #
+        # squared_dev = (mu - y)**2
+        # determ = torch.cumprod(var, dim=1)[:, -1:]
+        # loss = torch.sum(squared_dev * 1./var, dim=1).unsqueeze(1) + torch.log(determ)
+        #
+        # return loss.mean()
+        inv_var = torch.exp(-logvar)
+        mse_losses = torch.mean(torch.mean(((mu - y) ** 2) * inv_var, dim=-1), dim=-1)
+        var_losses = torch.mean(torch.mean(logvar, dim=-1), dim=-1)
+        return mse_losses + var_losses
 
 
 class GaussianVarianceNetworkv2(Network):
@@ -238,7 +242,6 @@ class GaussianVarianceNetworkv2(Network):
     def __init__(self, **kwargs):
         super(GaussianVarianceNetworkv2, self).__init__(**kwargs)
         self.bound_var = kwargs['bound_var']
-
         self.fc1 = nn.Linear(in_features=self.state_dim, out_features=10)
         self.fc2 = nn.Linear(in_features=10, out_features=10)
 
@@ -350,6 +353,199 @@ class GaussianVarianceNetworkv2(Network):
             summary_writer.add_scalar('loss/step/maxlogvar1', self.max_logvar[1], self.train_step)
             summary_writer.add_scalar('loss/step/minlogvar0', self.min_logvar[0], self.train_step)
             summary_writer.add_scalar('loss/step/minlogvar1', self.min_logvar[1], self.train_step)
+
+
+class GaussianVarianceNetworkv3(Network):
+    def __init__(self, **kwargs):
+        super(GaussianVarianceNetworkv3, self).__init__(**kwargs)
+        self.bound_var = kwargs['bound_var']
+        self.activation_function = kwargs['activation_function']
+
+        self.fc1 = nn.Linear(in_features=self.state_dim + self.num_actions, out_features=250)
+        self.fc2 = nn.Linear(in_features=250, out_features=250)
+        self.exp_fc3 = nn.Linear(in_features=250, out_features=self.state_dim)
+        self.var_fc3 = nn.Linear(in_features=250, out_features=self.state_dim)
+
+        # Using Kurtland's Chua config out of the box
+        self.max_logvar = nn.Parameter(torch.ones(2)*0.5)
+        self.min_logvar = nn.Parameter(torch.ones(2)*-10)
+
+        self.init_weight()
+
+        self.optimizer = optim.Adam(self.parameters(), self.lr)
+
+        # DEBUG vars
+        self.train_step = 0
+        self.test_step = 0
+
+    def init_weight(self):
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                torch.nn.init.xavier_uniform(m.weight.data)
+                m.bias.data.fill_(0)
+
+    def forward(self, x, a):
+
+        x = torch.cat([x, a], dim=1)
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
+
+        exp = self.exp_fc3(x)
+        logvar = self.var_fc3(x)
+
+        if self.bound_var:
+            logvar = self.max_logvar - F.softplus(self.max_logvar - logvar)
+            logvar = self.min_logvar + F.softplus(logvar - self.min_logvar)
+
+        return exp, logvar
+
+    def fit(self, x, a, y):
+        x = Variable(x)
+        a = Variable(a)
+        y = Variable(y)
+
+        self.optimizer.zero_grad()
+
+        exp_y, logvar_y = self.forward(x, a)
+        loss = self.loss(exp_y, logvar_y, y)
+        loss.backward()
+
+        self.optimizer.step()
+
+        return np.asscalar(loss.data.cpu().numpy())
+
+    def evaluate(self, x, a, y):
+        x = Variable(x, volatile=False)
+        a = Variable(a, volatile=False)
+        y = Variable(y, volatile=False)
+
+        exp_y, logvar_y = self.forward(x, a)
+        loss = self.loss(exp_y, logvar_y, y)
+        return np.asscalar(loss.data.cpu().numpy())
+
+    def predict_mean(self, x, a):
+        x = Variable(x, volatile=False)
+        a = Variable(a, volatile=False)
+
+        exp, _ = self.forward(x, a)
+        return exp
+
+    def predict_aleatoric_variance(self, x, a):
+        _, logvar = self.forward(x, a)
+        var = torch.exp(logvar)
+        max_var = var.max(dim=1, keepdim=True)[0]
+        return np.asscalar(max_var.data.cpu().numpy())
+
+    def loss(self, mu, logvar, y):
+        # var = torch.exp(logvar)
+        #
+        # squared_dev = (mu - y)**2
+        # determ = torch.cumprod(var, dim=1)[:, -1:]
+        # loss = torch.sum(squared_dev * 1./var, dim=1).unsqueeze(1) + torch.log(determ)
+
+        inv_var = torch.exp(-logvar)
+        mse_losses = torch.mean(torch.mean(((mu - y) ** 2) * inv_var, dim=-1), dim=-1)
+        var_losses = torch.mean(torch.mean(logvar, dim=-1), dim=-1)
+        loss = mse_losses + var_losses
+
+        if self.bound_var:
+            loss += 0.01 * torch.sum(self.max_logvar) - 0.01 * torch.sum(self.min_logvar)
+
+        # DEBUG
+        if self.training:
+            self.train_step += 1
+        else:
+            self.test_step += 1
+        return loss
+
+    def activation(self, x):
+        if self.activation_function == 'swish':
+            return x * x.sigmoid()
+        elif self.activation_function == 'relu':
+            return F.relu(x)
+        else:
+            raise NotImplementedError
+
+    def write_summary(self, summary_writer):
+        pass
+
+
+class GaussianVarianceNetwork1D(Network):
+    def __init__(self, **kwargs):
+        super(GaussianVarianceNetwork1D, self).__init__(**kwargs)
+
+        self.exp_fc1 = nn.Linear(in_features=1, out_features=50)
+        self.exp_fc2 = nn.Linear(in_features=50, out_features=50)
+
+        self.exp_fc3 = nn.Linear(in_features=50, out_features=50)
+        self.exp_fc4 = nn.Linear(in_features=50, out_features=1)
+
+        self.var_fc1 = nn.Linear(in_features=1, out_features=50)
+        self.var_fc2 = nn.Linear(in_features=50, out_features=50)
+
+        self.var_fc3 = nn.Linear(in_features=50, out_features=50)
+        self.var_fc4 = nn.Linear(in_features=50, out_features=1)
+
+        self.init_weight()
+
+        self.optimizer = optim.Adam(self.parameters(), lr=self.lr)
+
+    def init_weight(self):
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                torch.nn.init.xavier_uniform(m.weight.data)
+                m.bias.data.fill_(0)
+
+    def forward(self, x, a):
+        exp = F.relu(self.exp_fc1(x))
+        exp = F.relu(self.exp_fc2(exp))
+        exp = F.relu(self.exp_fc3(exp))
+        exp = self.exp_fc4(exp)
+
+        logvar = F.relu(self.var_fc1(x))
+        logvar = F.relu(self.var_fc2(logvar))
+        logvar = F.relu(self.var_fc3(logvar))
+        logvar = self.var_fc4(logvar)
+
+        return exp, logvar
+
+    def fit(self, x, a, y):
+        x = Variable(x)
+        y = Variable(y)
+
+        self.optimizer.zero_grad()
+
+        exp_y, logvar_y = self.forward(x, a)
+        loss = self.loss(exp_y, logvar_y, y)
+        loss.backward()
+
+        self.optimizer.step()
+
+        return loss.item()
+
+    def evaluate(self, x, a, y):
+        x = Variable(x, volatile=False)
+        y = Variable(y, volatile=False)
+
+        exp_y, logvar_y = self.forward(x, a)
+        loss = self.loss(exp_y, logvar_y, y)
+        return loss.item()
+
+    def predict_mean(self, x, a):
+        x = Variable(x, volatile=False)
+        return self.forward(x, a)[0]
+
+    def predict_aleatoric_variance(self, x, a):
+        variances = torch.exp(self.forward(x)[1])
+        # TODO: Possible shape error here
+        max_var = variances.max(dim=1, keepdim=True)[0]
+        return np.asscalar(max_var.data.cpu().numpy())
+
+    def loss(self, mu, logvar, y):
+        inv_var = torch.exp(-logvar)
+        mse_losses = torch.mean(torch.mean(((mu - y) ** 2) * inv_var, dim=-1), dim=-1)
+        var_losses = torch.mean(torch.mean(logvar, dim=-1), dim=-1)
+        return mse_losses + var_losses
 
 
 if __name__ == "__main__":

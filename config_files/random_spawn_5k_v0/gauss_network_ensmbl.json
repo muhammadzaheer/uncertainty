@@ -1,11 +1,11 @@
 {
     "config_class": "EnsembleConfig",
     "fixed_parameters": {
-        "exp_name": "exp_network_ensmbl",
+        "exp_name": "random_spawn_5k_v0/gauss_network_ensmbl",
         "dataset": "random_spawn_5k_v0",
         "lr": 0.001,
         "momentum": 0.9,
-        "network": "ExpectationNetwork",
+        "network": "GaussianVarianceNetwork",
         "is_resume": false,
         "batch_size": 32,
         "num_actions": 4,
@@ -17,7 +17,7 @@
         "num_networks": 5,
         "sample_loss": true,
         "exp_loss": true,
-        "aleatoric": false,
+        "aleatoric": true,
         "epistemic": true
     }
 }

@@ -12,7 +12,6 @@ class NetworkConfig(object):
         self.exp_name = exp_name
         self.run = run
         self.param_setting = param_setting
-        self.learning_rate = lr
         self.ensemble = False
 
         self.batch_size = 32
@@ -69,6 +68,9 @@ class NetworkConfig(object):
     def get_resume_path(self):
         _, best_ckpt_path, _ = self.get_ckpt_dir()
         return best_ckpt_path
+
+        # ckpt_path, best_ckpt_path, _ = self.get_ckpt_dir()
+        # return ckpt_path
 
     def persist_config(self):
         attrs = dict(self.__dict__)

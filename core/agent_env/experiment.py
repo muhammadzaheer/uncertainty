@@ -30,7 +30,7 @@ class RandomSpawnExperiment(object):
             episode_count += 1
 
     def run_episode(self):
-        s = self.environment.start(self.sample_xy())
+        s = self.environment.start(self.environment.sample_state())
         a = self.agent.start(s)
         done = False
         step_count = 0
@@ -42,12 +42,8 @@ class RandomSpawnExperiment(object):
             transitions.append((s, a, ns))
             a = self.agent.get_action(ns)
             s = ns
-        return transitions
 
-    def sample_xy(self):
-        x = np.random.uniform()
-        y = np.random.uniform()
-        return x, y
+        return transitions
 
     def set_seed(self, seed):
         if seed != -1:

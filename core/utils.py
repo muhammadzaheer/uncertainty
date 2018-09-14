@@ -2,6 +2,8 @@ import os
 import sys
 import logging
 import torch
+import random
+import numpy as np
 
 
 def ensure_dirs(dirs):
@@ -35,3 +37,10 @@ def setup_logger(log_file, level=logging.INFO, stdout=False):
 
     logger.setLevel(level)
     return logger
+
+
+def set_seed(seed):
+    if seed != -1:
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)

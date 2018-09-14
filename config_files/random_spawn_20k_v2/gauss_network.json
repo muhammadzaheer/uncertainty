@@ -1,0 +1,23 @@
+{
+    "config_class": "NetworkConfig",
+    "fixed_parameters": {
+        "exp_name": "random_spawn_20k_v2/gauss_network",
+        "dataset": "random_spawn_20k_v2",
+        "lr": 0.001,
+        "momentum": 0.9,
+        "network": "GaussianVarianceNetwork",
+        "env": "NoiseWorldv2",
+        "is_resume": false,
+        "batch_size": 32,
+        "num_actions": 4,
+        "state_dim": 2,
+        "total_epochs": 80,
+        "save_frequency": 10,
+        "test_every_batches": 100,
+        "batches_per_test": 100,
+        "sample_loss": true,
+        "exp_loss": true,
+        "aleatoric": true,
+        "epistemic": false
+    }
+}

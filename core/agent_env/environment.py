@@ -54,7 +54,7 @@ class AccelerateWorldv1(object):
         raise NotImplementedError
 
 
-class NoiseWorld(object):
+class NoiseWorldv0(object):
     # A unit square where the displacement has zero mean gaussian noise
     def __init__(self):
         # Start state and no of rows, cols in unit grid
@@ -110,8 +110,107 @@ class NoiseWorld(object):
         ns = (nx, ny)
         return np.asarray(ns)
 
+    def sample_start_state(self):
+        x = np.random.uniform()
+        y = np.random.uniform()
+        return x, y
+
+
+class NoiseWorldv1(NoiseWorldv0):
+    # A unit square where the displacement has zero mean gaussian noise
+    def __init__(self):
+        super(NoiseWorldv1, self).__init__()
+        self.noise_variance = [[0.000025, 0.0], [0.0, 0.000025]]  # i.e. std: 0.05 for each dimension
+
+    def step(self, action):
+        x, y = self.current_state
+        if x > 0.9 and y > 0.9:
+            # Non-Markov region (considerably smaller than NoiseWorldv0)
+            noise = np.random.multivariate_normal(self.noise_mean, self.noise_variance, 1)[0]
+            _action = self.action_set[action]
+            nx = min(self.max_x, max(0.0, x + _action[0] + noise[0]))
+            ny = min(self.max_y, max(0.0, y + _action[1] + noise[1]))
+        else:
+            _action = self.action_set[action]
+            nx = min(self.max_x, max(0.0, x + _action[0]))
+            ny = min(self.max_y, max(0.0, y + _action[1]))
+        ns = (nx, ny)
+        self.current_state = np.asarray(ns)
+        self.previous_action = action
+
+        return np.copy(self.current_state)
+
+
+class NoiseWorldv2(NoiseWorldv0):
+    # A unit square where the displacement has zero mean gaussian noise
+    def __init__(self):
+        super(NoiseWorldv2, self).__init__()
+        self.noise_variance = [[0.000025, 0.0], [0.0, 0.000025]]  # i.e. std: 0.05 for each dimension
+
+    def step(self, action):
+        x, y = self.current_state
+        if x > 0.9 and y < 0.1:
+            # Non-Markov region (considerably smaller than NoiseWorldv0)
+            noise = np.random.multivariate_normal(self.noise_mean, self.noise_variance, 1)[0]
+            _action = self.action_set[action]
+            nx = min(self.max_x, max(0.0, x + _action[0] + noise[0]))
+            ny = min(self.max_y, max(0.0, y + _action[1] + noise[1]))
+        else:
+            _action = self.action_set[action]
+            nx = min(self.max_x, max(0.0, x + _action[0]))
+            ny = min(self.max_y, max(0.0, y + _action[1]))
+        ns = (nx, ny)
+        self.current_state = np.asarray(ns)
+        self.previous_action = action
+
+        return np.copy(self.current_state)
+
+
+class Sinev0(object):
+    # A unit square where the displacement has zero mean gaussian noise
+    def __init__(self):
+        self.alpha = 4
+        self.beta = 13
+        self.noise_region = (0.4, 0.6)
+        self.noise = 0.1
+
+        self.start_state = np.array([np.random.uniform(low=-1.0, high=2.0)])
+
+        self.current_state = None
+
+    def start(self, start_state=None):
+        if start_state is None:
+            self.current_state = self.start_state
+        else:
+            self.current_state = start_state
+        return np.copy(self.current_state)
+
+    def step(self, action):
+        x = self.current_state[0]
+        mu = 0.0
+        low, high = self.noise_region
+        if low < x < high:
+            sigma = self.noise
+        else:
+            sigma = 0.0
+
+        w = np.random.normal(mu, sigma)
+        y = x + np.sin(self.alpha * (x + w)) + np.sin(self.beta * (x + w)) + w
+
+        return np.array([y])
+
+    def expected_step(self, state, action):
+        x = state[0]
+        mu = 0.0
+        sigma = 0.0
+        w = np.random.normal(mu, sigma)
+        y = x + np.sin(self.alpha * (x + w)) + np.sin(self.beta * (x + w)) + w
+        return np.array([y])
+
+    def sample_state(self):
+        return np.array([np.random.uniform(low=-1.0, high=2.0)])
 
 if __name__ == '__main__':
-    env = NoiseWorld()
+    env = NoiseWorldv0()
     env.start()
     env.step(0)
