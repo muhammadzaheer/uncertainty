@@ -551,6 +551,75 @@ class GaussianVarianceNetwork1D(Network):
         return mse_losses + var_losses
 
 
+class Impoverishedv1GaussianVarianceNetwork1D(GaussianVarianceNetwork1D):
+    def __init__(self, **kwargs):
+        super(Impoverishedv1GaussianVarianceNetwork1D, self).__init__(**kwargs)
+
+        self.exp_fc1 = nn.Linear(in_features=1, out_features=50)
+        self.exp_fc2 = nn.Linear(in_features=50, out_features=1)
+
+        self.var_fc1 = nn.Linear(in_features=1, out_features=50)
+        self.var_fc2 = nn.Linear(in_features=50, out_features=50)
+
+        self.var_fc3 = nn.Linear(in_features=50, out_features=50)
+        self.var_fc4 = nn.Linear(in_features=50, out_features=1)
+
+        self.init_weight()
+
+        self.optimizer = optim.Adam(self.parameters(), lr=self.lr)
+
+    def forward(self, x, a):
+        exp = F.relu(self.exp_fc1(x))
+        exp = self.exp_fc2(exp)
+
+        logvar = F.relu(self.var_fc1(x))
+        logvar = F.relu(self.var_fc2(logvar))
+        logvar = F.relu(self.var_fc3(logvar))
+        logvar = self.var_fc4(logvar)
+
+        return exp, logvar
+
+
+class Impoverishedv2GaussianVarianceNetwork1D(Impoverishedv1GaussianVarianceNetwork1D):
+    def __init__(self, **kwargs):
+        super(Impoverishedv2GaussianVarianceNetwork1D, self).__init__(**kwargs)
+
+        self.exp_fc1 = nn.Linear(in_features=1, out_features=25)
+        self.exp_fc2 = nn.Linear(in_features=25, out_features=1)
+
+
+class Impoverishedv3GaussianVarianceNetwork1D(Impoverishedv1GaussianVarianceNetwork1D):
+    def __init__(self, **kwargs):
+        super(Impoverishedv3GaussianVarianceNetwork1D, self).__init__(**kwargs)
+
+        self.exp_fc1 = nn.Linear(in_features=1, out_features=5)
+        self.exp_fc2 = nn.Linear(in_features=5, out_features=1)
+
+
+class Impoverishedv4GaussianVarianceNetwork1D(GaussianVarianceNetwork1D):
+    def __init__(self, **kwargs):
+        super(Impoverishedv4GaussianVarianceNetwork1D, self).__init__(**kwargs)
+
+        self.exp_fc1 = nn.Linear(in_features=1, out_features=50)
+        self.exp_fc2 = nn.Linear(in_features=50, out_features=1)
+
+        self.var_fc1 = nn.Linear(in_features=1, out_features=50)
+        self.var_fc2 = nn.Linear(in_features=50, out_features=1)
+
+        self.init_weight()
+
+        self.optimizer = optim.Adam(self.parameters(), lr=self.lr)
+
+    def forward(self, x, a):
+        exp = F.relu(self.exp_fc1(x))
+        exp = self.exp_fc2(exp)
+
+        logvar = F.relu(self.var_fc1(x))
+        logvar = self.var_fc2(logvar)
+
+        return exp, logvar
+
+
 if __name__ == "__main__":
     net = ExpectationNetwork(lr=0.001)
     action = torch.zeros(1, 4)

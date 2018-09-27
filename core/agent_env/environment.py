@@ -254,6 +254,14 @@ class Sinev3(Sinev0):
         self.noise = 0.0
 
 
+class Sinev4(Sinev0):
+    def __init__(self):
+        super(Sinev4, self).__init__()
+        self.alpha = 4
+        self.beta = 13
+        self.noise_region = (-0.1, 0.5)
+        self.noise = 1.0
+
 
 if __name__ == '__main__':
     env = NoiseWorldv0()

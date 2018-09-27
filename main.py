@@ -55,6 +55,6 @@ if __name__ == '__main__':
 
     # Creating the trainer object
     trainer = Trainer(cfg, train_dir, test_dir, cfg.batch_size,
-                      network, sw, cfg.total_epochs,
+                      network, sw, cfg.total_epochs + 1,
                       epoch_log=epoch_log, step_log=step_log, save_frequency=cfg.save_frequency)
     trainer.train(is_resume=cfg.is_resume)

@@ -1,12 +1,12 @@
 {
     "config_class": "EnsembleConfig",
     "fixed_parameters": {
-        "exp_name": "1d_random_spawn_10k_v0/gauss_network_1d_ensmbl",
-        "dataset": "1d_random_spawn_10k_v0",
+        "exp_name": "1d_random_spawn_10k_v2/gauss_network_1d_ensmbl",
+        "dataset": "1d_random_spawn_10k_v2",
         "lr": 0.001,
         "momentum": 0.9,
         "network": "GaussianVarianceNetwork1D",
-        "env": "Sinev0",
+        "env": "Sinev2",
         "is_resume": false,
         "batch_size": 32,
         "num_actions": 4,

@@ -7,6 +7,8 @@ Goal:
 """
 import os
 import argparse
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
@@ -17,25 +19,27 @@ import core.model.network
 import core.agent_env.environment
 from core.model.ensemble import Ensemble
 from core.config import ConfigLoader
+from core.utils import ensure_dirs
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='main')
     parser.add_argument('--num-runs', default=1, type=int)
-    parser.add_argument('--config-file', default='config_files/1d_random_spawn_10k_v0/gauss_network_1d_ensmbl.json', help='Configuration File')
+    parser.add_argument('--config-file', default='config_files/1d_random_spawn_10k_v0/gauss_network_1d_ensmbl_test.json', help='Configuration File')
     parser.add_argument('--num-samples', default=5000)
-    parser.add_argument('--env', default='Sinev0')
 
     args = parser.parse_args()
 
-    out_path = os.path.join("plots", "1d_random_spawn_10k_v0", "{run}.png")
-
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    env = getattr(core.agent_env.environment, args.env)()
     cfg_loader = ConfigLoader(os.path.join(project_root, args.config_file))
     for run in range(args.num_runs):
         cfg = cfg_loader.parse(run)
+        out_dir = os.path.join("analysis/plots", cfg.dataset, os.path.splitext(os.path.basename(args.config_file))[0])
+        ensure_dirs([out_dir])
+        out_path = os.path.join(out_dir, "{run}.png")
+
+        env = getattr(core.agent_env.environment, cfg.env)()
         kwargs = dict(cfg.__dict__)
         Network = getattr(core.model.network, cfg.network)
 
@@ -55,7 +59,6 @@ if __name__ == '__main__':
 
         axs[0][0].set_title("Aleatoric Uncertainty")
         axs[0][1].set_title("Epistemic Uncertainty")
-
         for k, epoch in enumerate(epoch_range):
 
             network.resume_checkpoint(cfg.get_interval_resume_path().format(epoch=epoch))
@@ -71,10 +74,10 @@ if __name__ == '__main__':
 
             # Doing some drawing
             axs[k][0].plot(mean_x, mean_y, sns.xkcd_rgb["black"])
-            axs[k][0].scatter(samples_x, samples_y, c=sns.xkcd_rgb["light pink"], marker='.')
+            axs[k][0].scatter(samples_x, samples_y, c=sns.xkcd_rgb["light blue"], marker='.')
 
             axs[k][1].plot(mean_x, mean_y, sns.xkcd_rgb["black"])
-            axs[k][1].scatter(samples_x, samples_y, c=sns.xkcd_rgb["light pink"], marker='.')
+            axs[k][1].scatter(samples_x, samples_y, c=sns.xkcd_rgb["light blue"], marker='.')
 
             axs[k][0].plot(range_x, mean, c=sns.xkcd_rgb['dark purple'])
             axs[k][0].fill_between(range_x, mean - aleatoric, mean + aleatoric,

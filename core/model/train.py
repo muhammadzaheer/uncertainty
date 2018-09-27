@@ -55,12 +55,12 @@ class Trainer(object):
             self.network.write_summary(self.summary_writer)
             losses.append(loss)
 
-            if self.curr_batch % self.eval_frequency == 0:
-                test_loss = self.evaluate_batches()
-                self.summary_writer.add_scalar('loss/step/test_loss', test_loss, self.curr_batch)
-                self.step_logger.info("Time {:12s} | Epoch: {} | Step: {} | Loss: {}".format(
-                    time.strftime("%Hh %Mm %Ss", time.gmtime(time.time() - self.start_time)),
-                    self.curr_epoch, self.curr_batch, test_loss))
+            # if self.curr_batch % self.eval_frequency == 0:
+            #     test_loss = self.evaluate_batches()
+            #     self.summary_writer.add_scalar('loss/step/test_loss', test_loss, self.curr_batch)
+            #     self.step_logger.info("Time {:12s} | Epoch: {} | Step: {} | Loss: {}".format(
+            #         time.strftime("%Hh %Mm %Ss", time.gmtime(time.time() - self.start_time)),
+            #         self.curr_epoch, self.curr_batch, test_loss))
             self.curr_batch += 1
         return np.mean(losses)
 
